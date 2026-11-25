@@ -149,6 +149,31 @@
       color: #fff;
     }
 
+    /* Floating Music Toggle */
+    .music-toggle {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      z-index: 60;
+      background: var(--card-bg);
+      color: var(--maroon);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 10px 16px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      box-shadow: 0 10px 24px rgba(62, 15, 23, 0.12);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .music-toggle:hover {
+      background: var(--maroon);
+      color: #fff;
+    }
+
     /* Main Container */
     .container {
       max-width: 780px;
@@ -494,7 +519,7 @@
 
     footer {
       text-align: center;
-      padding: 40px 20px 64px;
+      padding: 40px 20px 80px;
       color: var(--muted);
       font-size: 13px;
     }
@@ -524,6 +549,11 @@
     </div>
   </div>
 
+  <!-- Music Toggle -->
+  <button class="music-toggle" id="musicToggle" type="button" aria-pressed="false">
+    ♪ Play Music
+  </button>
+
   <main>
     <!-- Hero -->
     <header class="hero container">
@@ -534,7 +564,7 @@
         <span class="weds-badge">weds</span>
         Kumari Ragini
       </h1>
-      <p class="hero-date">Thursday · 3 December 2026 · Garhwa, Jharkhand</p>
+      <p class="hero-date">Thursday · 3 December 2026 · Hariharpur, Garhwa, Jharkhand</p>
       <a href="#countdown" class="scroll-hint">Scroll to Begin ↓</a>
     </header>
 
@@ -575,7 +605,7 @@
         <div class="font-hi hindi-names">चिरंजीवी पुनीत कुमार सिंह & सौभाग्यकांक्षिणी कुमारी रागिनी</div>
         <p class="section-sub">
           With the grace of the Almighty and the blessings of our elders, we warmly invite you to join
-          the auspicious pre-wedding and wedding celebrations of Punit and Ragini in Garhwa district, Jharkhand.
+          the auspicious pre-wedding and wedding celebrations of Punit and Ragini in Hariharpur, Garhwa district, Jharkhand.
           Your presence, love, and blessings will make our celebration complete.
         </p>
       </div>
@@ -674,13 +704,13 @@
       <div class="two-col">
         <div class="info-card">
           <h3>Wedding Venue</h3>
-          <p><strong>[Enter Exact Venue / Landmark]</strong></p>
-          <p>Village: <strong>[Enter Village Name]</strong></p>
+          <p><strong>Hariharpur</strong></p>
+          <p>PIN Code: <strong>822120</strong></p>
           <p>Garhwa District, Jharkhand</p>
           <p style="margin-top: 12px;">
             <a
               class="btn-outline"
-              href="https://www.google.com/maps/search/?api=1&query=Garhwa+Jharkhand"
+              href="https://www.google.com/maps/search/?api=1&query=Hariharpur+822120+Garhwa+Jharkhand"
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -723,14 +753,110 @@
 
   <footer>
     <div class="font-hi" style="color: var(--maroon); font-size: 16px; margin-bottom: 6px;">॥ शुभ मंगल ॥</div>
-    <p>Punit Kumar Singh & Kumari Ragini · 3 December 2026 · Garhwa, Jharkhand</p>
+    <p>Punit Kumar Singh & Kumari Ragini · 3 December 2026 · Hariharpur, Garhwa, Jharkhand</p>
   </footer>
 
   <script>
-    // Welcome overlay dismiss
+    // Soft Indian Classical / Shehnai-inspired Ambient Background Music (Web Audio API)
+    const musicToggle = document.getElementById('musicToggle');
+    let audioCtx = null;
+    let musicTimer = null;
+    let isPlaying = false;
+    let stepIndex = 0;
+
+    // Gentle raga-inspired motif (D4, E4, F#4, A4, B4, D5)
+    const melodyNotes = [
+      293.66, 329.63, 369.99, 440.00,
+      493.88, 587.33, 493.88, 440.00,
+      369.99, 440.00, 329.63, 293.66
+    ];
+
+    function playNote(freq, duration = 0.75) {
+      if (!audioCtx) return;
+      const now = audioCtx.currentTime;
+
+      const osc = audioCtx.createOscillator();
+      const harmonic = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      const filter = audioCtx.createBiquadFilter();
+
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, now);
+
+      harmonic.type = 'sine';
+      harmonic.frequency.setValueAtTime(freq * 2, now);
+
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(1250, now);
+
+      const harmonicGain = audioCtx.createGain();
+      harmonicGain.gain.setValueAtTime(0.015, now);
+
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.045, now + 0.08);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+      osc.connect(filter);
+      harmonic.connect(harmonicGain);
+      harmonicGain.connect(filter);
+      filter.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      osc.start(now);
+      harmonic.start(now);
+      osc.stop(now + duration + 0.02);
+      harmonic.stop(now + duration + 0.02);
+    }
+
+    function startMusic() {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) return;
+
+      if (!audioCtx) {
+        audioCtx = new AudioContextClass();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+
+      if (musicTimer) clearInterval(musicTimer);
+      isPlaying = true;
+      musicToggle.textContent = '♪ Pause Music';
+      musicToggle.setAttribute('aria-pressed', 'true');
+
+      const tick = () => {
+        if (!isPlaying) return;
+        playNote(melodyNotes[stepIndex % melodyNotes.length], 0.85);
+        stepIndex += 1;
+      };
+
+      tick();
+      musicTimer = setInterval(tick, 680);
+    }
+
+    function stopMusic() {
+      isPlaying = false;
+      if (musicTimer) {
+        clearInterval(musicTimer);
+        musicTimer = null;
+      }
+      musicToggle.textContent = '♪ Play Music';
+      musicToggle.setAttribute('aria-pressed', 'false');
+    }
+
+    musicToggle.addEventListener('click', () => {
+      if (isPlaying) {
+        stopMusic();
+      } else {
+        startMusic();
+      }
+    });
+
+    // Welcome overlay dismiss + start background music
     const welcomeScreen = document.getElementById('welcome-screen');
     document.getElementById('openBtn').addEventListener('click', () => {
       welcomeScreen.classList.add('hidden');
+      startMusic();
     });
 
     // Countdown to Nov 30, 2026 (Tilak / Start of celebrations)
